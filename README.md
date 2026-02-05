@@ -336,6 +336,7 @@ samtools index "$MeuDrive/dados/bam/$SAMPLE.sorted.bam"
 
 Exibe as cinco primeiras linhas do arquivo SAM gerado no alinhamento, permitindo verificar o cabeçalho e o formato dos registros, incluindo informações de referência e grupos de leitura. Essa inspeção inicial confirma que o alinhamento foi executado corretamente antes das etapas de processamento do BAM.
 
+
 ``` bash
 
 %%bash
