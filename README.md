@@ -1491,63 +1491,184 @@ perl annovar/annotate_variation.pl -geneanno -buildver hg19 \
     "$MeuDrive/dados/annotation/variantes.avinput" annovar/humandb/
 ```
 
+```bash
 
+%%bash
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
 
+echo "🔬 Executando anotação completa com table_annovar..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+echo "🔄 Executando anotação (pode levar alguns minutos)..."
 
+# Executar table_annovar
+perl annovar/table_annovar.pl "$MeuDrive/dados/annotation/variantes.avinput" \
+    annovar/humandb/ \
+    -buildver hg19 \
+    -out "$MeuDrive/dados/annotation/anotacao_completa" \
+    -remove \
+    -protocol "refGene,gnomad_exome,revel,clinvar_20200316" \
+    -operation "g,f,f,f" \
+    -nastring . \
+    -csvout
 
+echo ""
+echo "📊 Verificando resultados da anotação completa..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+# Verificar arquivo de saída
+arquivo_saida="$MeuDrive/dados/annotation/anotacao_completa.hg19_multianno.csv"
 
+if [ -f "$arquivo_saida" ]; then
+    linhas=$(wc -l < "$arquivo_saida")
+    tamanho=$(du -h "$arquivo_saida" | cut -f1)
 
+    echo "✅ Anotação completa concluída!"
+    echo "📄 Arquivo: anotacao_completa.hg19_multianno.csv"
+    echo "📊 Linhas: $linhas (incluindo cabeçalho)"
+    echo "📏 Tamanho: $tamanho"
 
+    echo ""
+    echo "📋 Cabeçalho do arquivo (colunas disponíveis):"
+    head -1 "$arquivo_saida" | tr ',' '\n' | nl | head -10
 
+    total_colunas=$(head -1 "$arquivo_saida" | tr ',' '\n' | wc -l)
+    if [ $total_colunas -gt 10 ]; then
+        echo "    ... e mais $(( $total_colunas - 10 )) colunas"
+    fi
 
+else
+    echo "❌ Erro na anotação completa!"
+    echo "📝 Verifique se os bancos de dados foram baixados corretamente."
+fi
+```
 
+```python
 
+import pandas as pd
+import os
 
+# Definir caminhos de entrada e saída
+MeuDrive = "/content/drive/MyDrive/TRABALHO_FINAL"
+arquivo = os.path.join(MeuDrive, "dados/annotation/anotacao_completa.hg19_multianno.csv")
+saida_dir = os.path.join(MeuDrive, "dados/annotation")
 
+# Ler arquivo CSV com pandas
+df = pd.read_csv(arquivo)
 
+# Definir listas e condições para filtragem
+funcoes_alta = ['exonic', 'splicing', 'exonic;splicing']
+tipos_alta = ['frameshift deletion', 'frameshift insertion', 'nonsense', 'stopgain', 'stoploss']
+tipos_media = ['missense', 'nonframeshift deletion', 'nonframeshift insertion']
 
+# Normalizar colunas para lower case para busca
+# Tratar NaNs para string vazia para evitar erros
+df['Func.refGene'] = df['Func.refGene'].fillna('').str.lower()
+df['ExonicFunc.refGene'] = df['ExonicFunc.refGene'].fillna('')
 
+# Inicializar coluna prioridade
+def classificar_prioridade(row):
+    funcao = row['Func.refGene']
+    tipo_exonico = row['ExonicFunc.refGene']
+    if any(f in funcao for f in funcoes_alta):
+        if any(t in tipo_exonico for t in tipos_alta):
+            return 'alta'
+        elif any(t in tipo_exonico for t in tipos_media):
+            return 'media'
+    return 'baixa'
 
+# Aplicar função no dataframe
+df['Prioridade'] = df.apply(classificar_prioridade, axis=1)
 
+# Contar as prioridades
+total_variantes = len(df)
+contagem = df['Prioridade'].value_counts().to_dict()
 
+# Listas separadas
+alta_prioridade = df[df['Prioridade'] == 'alta']
+media_prioridade = df[df['Prioridade'] == 'media']
+baixa_prioridade = df[df['Prioridade'] == 'baixa']
 
+# Imprimir resultados
+print(f"📊 Resultados da priorização:")
+print(f"• Total de variantes: {total_variantes}")
+print(f"• 🔴 Alta prioridade: {contagem.get('alta',0)}")
+print(f"• 🟡 Média prioridade: {contagem.get('media',0)}")
+print(f"• 🟢 Baixa prioridade: {contagem.get('baixa',0)}")
 
+# Mostrar variantes de alta prioridade (até 5)
+if not alta_prioridade.empty:
+    print("🔴 VARIANTES DE ALTA PRIORIDADE:")
+    print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    for i, row in alta_prioridade.head(5).iterrows():
+        posicao = f"{row['Chr']}:{row['Start']}"
+        mudanca = f"{row['Ref']}→{row['Alt']}"
+        print(f"🧬 Variante {i+1}:")
+        print(f"   📍 {posicao} ({mudanca})")
+        print(f"   📝 Gene: {row.get('Gene.refGene', 'NA')}")
+        print(f"   🔬 Tipo: {row['ExonicFunc.refGene']}")
+        print()
+    # Salvar variantes alta prioridade
+    alta_prioridade.drop(columns=['Prioridade']).to_csv(
+        os.path.join(saida_dir, 'variantes_alta_prioridade.csv'), index=False)
+    print(f"💾 Variantes de alta prioridade salvas em: variantes_alta_prioridade.csv")
+else:
+    if not media_prioridade.empty:
+        print("🟡 VARIANTES DE MÉDIA PRIORIDADE:")
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        for i, row in media_prioridade.head(3).iterrows():
+            posicao = f"{row['Chr']}:{row['Start']}"
+            mudanca = f"{row['Ref']}→{row['Alt']}"
+            print(f"🧬 Variante {i+1}:")
+            print(f"   📍 {posicao} ({mudanca})")
+            print(f"   📝 Gene: {row.get('Gene.refGene', 'NA')}")
+            print(f"   🔬 Tipo: {row['ExonicFunc.refGene']}")
+            print()
+    else:
+        print("ℹ️ Nenhuma variante de alta ou média prioridade identificada.")
+        print("💡 Isso pode indicar:")
+        print("   • Região analisada é conservada")
+        print("   • Variantes são benignas ou comuns")
+        print("   • Filtros podem ser muito restritivos")
 
+```
 
+Output:
+```
+📊 Resultados da priorização:
+• Total de variantes: 4658
+• 🔴 Alta prioridade: 11
+• 🟡 Média prioridade: 0
+• 🟢 Baixa prioridade: 4647
+🔴 VARIANTES DE ALTA PRIORIDADE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧬 Variante 225:
+   📍 chr10:4889403 (C→T)
+   📝 Gene: AKR1E2
+   🔬 Tipo: stopgain
 
+🧬 Variante 815:
+   📍 chr10:22498484 (-→AGA)
+   📝 Gene: EBLN1
+   🔬 Tipo: nonframeshift insertion
 
+🧬 Variante 973:
+   📍 chr10:27687225 (A→G)
+   📝 Gene: PTCHD3
+   🔬 Tipo: stoploss
 
+🧬 Variante 984:
+   📍 chr10:27702256 (-→C)
+   📝 Gene: PTCHD3
+   🔬 Tipo: frameshift insertion
 
+🧬 Variante 1475:
+   📍 chr10:46999591 (-→ATGAGGGAG)
+   📝 Gene: GPRIN2
+   🔬 Tipo: nonframeshift insertion
 
+💾 Variantes de alta prioridade salvas em: variantes_alta_prioridade.csv
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
