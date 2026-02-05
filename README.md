@@ -1671,4 +1671,20 @@ Output:
 
 ```
 
+Tabela de variantes_alta_prioridade.csv
+
+| Chr   | Start     | End       | Ref | Alt           | Func.refGene | Gene.refGene | ExonicFunc.refGene        | AAChange.refGene | gnomAD_exome_ALL | gnomAD_exome_AFR | gnomAD_exome_AMR | gnomAD_exome_ASJ | gnomAD_exome_EAS | gnomAD_exome_FIN | gnomAD_exome_NFE | gnomAD_exome_OTH | gnomAD_exome_SAS | REVEL | CLNALLELEID | CLNDN | CLNDISDB | CLNREVSTAT | CLNSIG |
+|-------|-----------|-----------|-----|---------------|--------------|--------------|---------------------------|------------------|------------------|------------------|------------------|------------------|------------------|------------------|------------------|------------------|------------------|-------|-------------|-------|-----------|-------------|--------|
+| chr10 | 4889403   | 4889403   | C   | T             | exonic       | AKR1E2       | stopgain                  | p.R203X / p.R244X / p.R301X | 0.0950 | 0.0999 | 0.0732 | 0.0840 | 0.0006 | 0.1082 | 0.1186 | 0.0978 | 0.0769 | . | . | . | . | . | . |
+| chr10 | 22498484  | 22498484  | -   | AGA           | exonic       | EBLN1        | nonframeshift insertion   | p.L143_I144insL | 0.2576 | 0.5388 | 0.2836 | 0.3230 | 0.2160 | 0.2036 | 0.2556 | 0.2634 | 0.1586 | . | . | . | . | . | . |
+| chr10 | 27687225  | 27687225  | A   | G             | exonic       | PTCHD3       | stoploss                  | p.X768Q | 0.6160 | 0.5441 | 0.4359 | 0.7488 | 0.3467 | 0.6794 | 0.6777 | 0.6303 | 0.6924 | . | . | . | . | . | . |
+| chr10 | 27702256  | 27702256  | -   | C             | exonic       | PTCHD3       | frameshift insertion      | p.S309Qfs*26 | 0.3055 | 0.2791 | 0.2379 | 0.3445 | 0.1563 | 0.2943 | 0.3528 | 0.3159 | 0.2978 | . | 390586 | not_specified | MedGen:CN169374 | criteria_provided_single_submitter | Benign |
+| chr10 | 46999591  | 46999591  | -   | ATGAGGGAG     | exonic       | GPRIN2       | nonframeshift insertion   | p.E240_V241insMRE | . | . | . | . | . | . | . | . | . | . | . | . | . | . | . |
+| chr10 | 63422754  | 63422754  | -   | GGGCCGACCCCGGCA | exonic      | CABCOCO1     | nonframeshift insertion   | p.G14_T15insPTPAG | . | . | . | . | . | . | . | . | . | . | . | . | . | . | . |
+| chr10 | 88722398  | 88722398  | A   | T             | exonic       | SNCG         | stoploss                  | p.X127C | 0.2213 | 0.1813 | 0.1937 | 0.2225 | 0.0756 | 0.1971 | 0.2408 | 0.2244 | 0.3000 | 56 | . | . | . | . | . |
+| chr10 | 104161895 | 104161895 | C   | T             | exonic       | NFKB2        | stopgain                  | p.R853X | . | . | . | . | . | . | . | . | . | . | 76319 | CVID10 | OMIM:615577 | criteria_provided_multiple_submitters_no_conflicts | Pathogenic |
+| chr10 | 115439641 | 115439642 | TT  | -             | exonic       | CASP7        | frameshift deletion       | p.L44Sfs*70 | 0.2242 | 0.3318 | 0.1526 | 0.3718 | 0.2115 | 0.2039 | 0.2088 | 0.2569 | 0.2594 | . | . | . | . | . | . |
+| chr10 | 116085784 | 116085784 | -   | CCG           | exonic       | AFAP1L2      | nonframeshift insertion   | p.L110_G111insR | 0.6860 | 0.1886 | 0.6704 | 0.6204 | 0.9406 | 0.8054 | 0.7456 | 0.6881 | 0.5944 | . | . | . | . | . | . |
+| chr10 | 116931101 | 116931101 | -   | TT            | exonic       | ATRNL1       | frameshift insertion      | p.L467_468ins* | 0.9890 | 0.8518 | 0.9911 | 0.9972 | 1 | 1 | 0.9994 | 0.9932 | 0.9998 | . | . | . | . | . | . |
+
 
