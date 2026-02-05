@@ -780,6 +780,734 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 ```
 
 
+Estatísticas descritivas e caracterização das variantes chamadas
+
+Este bloco executa uma análise quantitativa e qualitativa do arquivo VCF gerado, com o objetivo de caracterizar o conjunto de variantes antes das etapas de filtragem avançada e interpretação. O script verifica a existência do VCF e contabiliza o número total de variantes chamadas (linhas não comentadas).
+
+Em seguida, as variantes são classificadas de forma simplificada em SNPs e INDELs, com base no comprimento dos alelos de referência e alternativo. Também é avaliada a distribuição das variantes em diferentes limiares de qualidade (campo QUAL), permitindo uma estimativa rápida da confiabilidade das chamadas.
+
+Por fim, são exibidos exemplos das primeiras variantes identificadas, incluindo os principais campos do VCF (cromossomo, posição, alelos, qualidade e informações), facilitando a inspeção manual e a validação do formato. Caso nenhuma variante seja detectada, o script fornece possíveis explicações técnicas, auxiliando no diagnóstico de problemas experimentais ou de parametrização.
+
+```bash
+%%bash
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+SAMPLE="cap-ngse-b-2019"
+
+echo "📊 Estatísticas detalhadas das variantes..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [ -f "$MeuDrive/dados/vcf/$SAMPLE.vcf" ]; then
+
+    # Contagem geral
+    echo "🔢 Contagens gerais:"
+    variantes=$(grep '^[^#]' "$MeuDrive/dados/vcf/$SAMPLE.vcf" | wc -l)
+    echo "• Variantes chamadas: $(printf "%'d" $variantes)"
+
+    if [ $variantes -gt 0 ]; then
+        echo ""
+        echo "🧬 Análise dos tipos de variantes:"
+
+        # Identificar SNPs e INDELs
+        snps=$(grep '^[^#]' "$MeuDrive/dados/vcf/$SAMPLE.vcf" | \
+               awk 'length($4)==1 && length($5)==1' | wc -l)
+        indels=$(grep '^[^#]' "$MeuDrive/dados/vcf/$SAMPLE.vcf" | \
+                awk 'length($4)!=length($5)' | wc -l)
+
+        echo "• SNPs (Single Nucleotide Polymorphisms): $snps"
+        echo "• INDELs (Inserções/Deleções): $indels"
+
+        # Distribuição por qualidade
+        echo ""
+        echo "📈 Distribuição por qualidade (QUAL):"
+        echo "• QUAL ≥ 30: $(grep '^[^#]' "$MeuDrive/dados/vcf/$SAMPLE.vcf" | awk '$6 >= 30' | wc -l)"
+        echo "• QUAL ≥ 50: $(grep '^[^#]' "$MeuDrive/dados/vcf/$SAMPLE.vcf" | awk '$6 >= 50' | wc -l)"
+        echo "• QUAL ≥ 100: $(grep '^[^#]' "$MeuDrive/dados/vcf/$SAMPLE.vcf" | awk '$6 >= 100' | wc -l)"
+
+        echo ""
+        echo "🎯 Primeiras 5 variantes identificadas:"
+        grep '^[^#]' "$MeuDrive/dados/vcf/$SAMPLE.vcf" | head -5 | \
+        cut -f1-8 | column -t
+
+    else
+        echo "⚠️ Nenhuma variante identificada."
+        echo "💡 Isso pode indicar:"
+        echo "   • Baixa cobertura na região"
+        echo "   • Parâmetros muito restritivos"
+        echo "   • Região conservada no cromossomo 8"
+    fi
+
+else
+    echo "❌ Arquivo VCF não encontrado!"
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+```
+
+Output:
+```
+📊 Estatísticas detalhadas das variantes...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔢 Contagens gerais:
+• Variantes chamadas: 6,965
+
+🧬 Análise dos tipos de variantes:
+• SNPs (Single Nucleotide Polymorphisms): 6412
+• INDELs (Inserções/Deleções): 553
+
+📈 Distribuição por qualidade (QUAL):
+• QUAL ≥ 30: 6965
+• QUAL ≥ 50: 5731
+• QUAL ≥ 100: 4655
+
+🎯 Primeiras 5 variantes identificadas:
+chr10  80119  .  C  G  78.32    .  AC=2;AF=1.00;AN=2;DP=2;ExcessHet=3.0103;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;QD=25.36;SOR=0.693
+chr10  80124  .  A  G  78.32    .  AC=2;AF=1.00;AN=2;DP=2;ExcessHet=3.0103;FS=0.000;MLEAC=1;MLEAF=0.500;MQ=60.00;QD=28.73;SOR=0.693
+chr10  93581  .  G  T  64.64    .  AC=1;AF=0.500;AN=2;BaseQRankSum=3.246;DP=85;ExcessHet=3.0103;FS=13.366;MLEAC=1;MLEAF=0.500;MQ=60.00;MQRankSum=0.000;QD=0.76;ReadPosRankSum=2.051;SOR=3.549
+chr10  93603  .  C  T  1169.64  .  AC=1;AF=0.500;AN=2;BaseQRankSum=-1.611;DP=104;ExcessHet=3.0103;FS=6.880;MLEAC=1;MLEAF=0.500;MQ=60.00;MQRankSum=0.000;QD=12.71;ReadPosRankSum=-2.915;SOR=0.290
+chr10  93616  .  C  T  245.64   .  AC=1;AF=0.500;AN=2;BaseQRankSum=3.009;DP=108;ExcessHet=3.0103;FS=13.311;MLEAC=1;MLEAF=0.500;MQ=60.00;MQRankSum=0.000;QD=2.27;ReadPosRankSum=-1.581;SOR=2.527
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+```
+
+Filtragem de variantes com base em critérios de qualidade (QUAL)
+
+Este bloco aplica uma filtragem inicial ao arquivo VCF com o objetivo de selecionar apenas variantes de alta confiabilidade. Após verificar a existência do VCF de entrada, é utilizado o bcftools filter para reter exclusivamente variantes com valor de qualidade (QUAL) igual ou superior a 100, um critério conservador comumente empregado para reduzir falsos positivos.
+
+Em seguida, o script compara quantitativamente o número de variantes antes e após a filtragem, permitindo avaliar o impacto do filtro aplicado e o percentual de variantes mantidas. Essa etapa é essencial para verificar se os critérios de qualidade estão excessivamente restritivos ou adequados ao conjunto de dados analisado.
+
+Por fim, caso variantes sejam retidas, são exibidos exemplos das primeiras variantes filtradas, facilitando a inspeção manual. Se nenhuma variante atender aos critérios, o pipeline fornece sugestões técnicas para ajuste dos parâmetros, como redução do limiar de qualidade ou verificação da cobertura de sequenciamento. Essa abordagem garante transparência, rastreabilidade e controle de qualidade na seleção de variantes para análises subsequentes.
+
+```bash
+
+%%bash
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+SAMPLE="cap-ngse-b-2019"
+
+echo "🔍 Filtragem de variantes de alta qualidade..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [ -f "$MeuDrive/dados/vcf/$SAMPLE.vcf" ]; then
+
+    echo "📋 Aplicando filtros de qualidade:"
+    echo "• QUAL ≥ 100 (qualidade da chamada)"
+    echo ""
+
+    # Aplicar filtros de qualidade
+    bcftools filter -i 'QUAL>=100' "$MeuDrive/dados/vcf/$SAMPLE.vcf" > "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf"
+
+    echo "✅ Filtragem concluída!"
+    echo ""
+
+    # Estatísticas antes e depois da filtragem
+    echo "📊 Comparação antes/depois da filtragem:"
+
+    variantes_total=$(bcftools view -H "$MeuDrive/dados/vcf/$SAMPLE.vcf" | wc -l)
+    variantes_filtradas=$(bcftools view -H "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" | wc -l)
+
+    echo "• Variantes antes da filtragem: $variantes_total"
+    echo "• Variantes após filtragem: $variantes_filtradas"
+
+    if [ $variantes_total -gt 0 ]; then
+        percentual=$(awk "BEGIN {printf \"%.1f\", ($variantes_filtradas/$variantes_total)*100}")
+        echo "• Percentual mantido: $percentual%"
+    fi
+
+    # Mostrar variantes filtradas se existirem
+    if [ $variantes_filtradas -gt 0 ]; then
+        echo ""
+        echo "🎯 Variantes de alta qualidade identificadas:"
+        bcftools view -H "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" | head -10 | \
+        cut -f1-8 | column -t
+    else
+        echo ""
+        echo "⚠️ Nenhuma variante passou pelos filtros de qualidade."
+        echo "💡 Sugestões:"
+        echo "   • Reduzir threshold de qualidade (QUAL < 100)"
+        echo "   • Verificar cobertura da região"
+    fi
+
+else
+    echo "❌ Arquivo VCF não encontrado!"
+    echo "📝 Execute a chamada de variantes primeiro."
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+```
+
+Interpretação do formato VCF e análise detalhada de variantes
+
+Este bloco tem como objetivo explicar a estrutura do formato VCF (Variant Call Format) e exemplificar a interpretação de uma variante filtrada de alta qualidade. O script valida a existência do arquivo VCF filtrado e apresenta a descrição funcional de cada coluna padrão do VCF, facilitando a compreensão dos campos utilizados ao longo do pipeline.
+
+Em seguida, é exibido o cabeçalho das colunas (#CHROM), garantindo a conferência do layout do arquivo e da ordem dos campos. Caso o VCF contenha variantes, o script seleciona a primeira entrada e realiza uma decomposição dos principais atributos, incluindo localização genômica, alelos de referência e alternativo, qualidade da chamada e status do filtro.
+
+A variante é então classificada automaticamente como SNP, inserção ou deleção, com base no comprimento relativo dos alelos REF e ALT. Por fim, a linha completa da variante é exibida, permitindo a correlação direta entre a interpretação didática e o registro bruto do VCF. Essa etapa é fundamental para consolidar o entendimento do formato VCF e preparar o usuário para análises de anotação funcional e interpretação clínica.
+
+```bash
+%%bash
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+SAMPLE="cap-ngse-b-2019"
+
+echo "📋 Interpretação detalhada do formato VCF..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [ -f "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" ]; then
+
+    echo "📖 Estrutura das colunas VCF:"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "1. CHROM  : Cromossomo"
+    echo "2. POS    : Posição (1-based)"
+    echo "3. ID     : Identificador (rs number)"
+    echo "4. REF    : Alelo de referência"
+    echo "5. ALT    : Alelo alternativo"
+    echo "6. QUAL   : Qualidade da chamada (Phred score)"
+    echo "7. FILTER : Status do filtro (PASS/FAIL)"
+    echo "8. INFO   : Informações adicionais"
+    echo "9. FORMAT : Formato dos dados da amostra"
+    echo "10. SAMPLE: Dados específicos da amostra"
+    echo ""
+
+    # Mostrar linha de header das colunas
+    echo "📄 Cabeçalho das colunas:"
+    grep '^#CHROM' "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf"
+    echo ""
+
+    # Análise de uma variante específica (se existir)
+    if [ $(bcftools view -H "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" | wc -l) -gt 0 ]; then
+        echo "🔍 Análise detalhada da primeira variante:"
+        variante=$(bcftools view -H "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" | head -1)
+
+        # Separar campos
+        chrom=$(echo "$variante" | cut -f1)
+        pos=$(echo "$variante" | cut -f2)
+        ref=$(echo "$variante" | cut -f4)
+        alt=$(echo "$variante" | cut -f5)
+        qual=$(echo "$variante" | cut -f6)
+        filter=$(echo "$variante" | cut -f7)
+
+        echo "• Localização: $chrom:$pos"
+        echo "• Mudança: $ref → $alt"
+        echo "• Qualidade: $qual"
+        echo "• Status: $filter"
+
+        # Determinar tipo de variante
+        if [ ${#ref} -eq 1 ] && [ ${#alt} -eq 1 ]; then
+            echo "• Tipo: SNP (Single Nucleotide Polymorphism)"
+        elif [ ${#ref} -gt ${#alt} ]; then
+            echo "• Tipo: Deleção ($(( ${#ref} - ${#alt} )) base(s))"
+        elif [ ${#ref} -lt ${#alt} ]; then
+            echo "• Tipo: Inserção ($(( ${#alt} - ${#ref} )) base(s))"
+        fi
+
+        echo ""
+        echo "📊 Linha completa da variante:"
+        echo "$variante"
+
+    else
+        echo "ℹ️ Nenhuma variante disponível para análise detalhada."
+    fi
+
+else
+    echo "❌ Arquivo VCF filtrado não encontrado!"
+    echo "📝 Execute a filtragem primeiro."
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+```
+
+Análise estatística de variantes com VCFtools (razão Ts/Tv)
+
+Este bloco executa uma análise estatística do arquivo VCF filtrado utilizando o VCFtools, com foco no cálculo da razão entre transições (Ts) e transversões (Tv). O script verifica a existência do VCF de entrada para garantir a correta execução da etapa.
+
+O comando --TsTv-summary gera um resumo das substituições nucleotídicas observadas, contabilizando eventos de transição (A↔G, C↔T) e transversão (purina↔pirimidina). A razão Ts/Tv é amplamente utilizada como métrica de controle de qualidade em análises genômicas, pois valores esperados (≈2.0–3.0 para dados humanos germinativos) indicam boa qualidade das chamadas de variantes.
+
+Os resultados são salvos em um arquivo de saída e exibidos no terminal para inspeção imediata. Essa etapa fornece uma validação adicional da confiabilidade do conjunto de variantes filtradas antes das fases de anotação funcional e interpretação biológica ou clínica.
+
+```bash
+%%bash
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+SAMPLE="cap-ngse-b-2019"
+
+echo "📈 Análise estatística detalhada com vcftools..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [ -f "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" ]; then
+
+    echo "🔍 Executando análises estatísticas..."
+
+    # Estatísticas gerais
+    vcftools --vcf "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" --TsTv-summary --out "$MeuDrive/dados/vcf/$SAMPLE"
+    cat  "$MeuDrive/dados/vcf/$SAMPLE.TsTv.summary"
+
+else
+    echo "❌ Arquivo VCF filtrado não encontrado!"
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+```
+
+ 8. Visualização e Validação 🔬 Preparação para IGV
+
+Para validar as variantes chamadas, podemos visualizá-las no IGV junto com os dados de alinhamento. 📋 Arquivos Necessários para IGV:
+
+Genoma de referência: hg38
+Arquivo BAM: cap-ngse-a-2019.sorted.bam + .bai
+Arquivo VCF: cap-ngse-a-2019.filtered.vcf
+🎯 Instruções para IGV:
+
+Carregar genoma: Human hg38
+Carregar BAM: Para ver alinhamentos
+Carregar VCF: Para ver variantes
+Navegar para variantes: Usar coordenadas das variantes
+
+Preparação e validação de arquivos para visualização no IGV
+
+Este bloco realiza a verificação final dos arquivos necessários para inspeção visual das variantes no IGV, uma etapa fundamental de validação manual. O script checa a presença do arquivo BAM alinhado e ordenado, seu respectivo índice (.bai) e o arquivo VCF filtrado, garantindo compatibilidade com o IGV.
+
+Quando todos os arquivos estão disponíveis, o script identifica automaticamente regiões genômicas contendo variantes de alta qualidade e sugere janelas expandidas ao redor dessas posições, facilitando a navegação e o zoom no IGV para avaliação do suporte por leituras individuais. Essa abordagem reduz o tempo de inspeção manual e direciona o usuário para regiões informativas.
+
+Por fim, são fornecidas instruções práticas para carregamento do genoma de referência, arquivos BAM e VCF no IGV, orientando o fluxo de validação visual. Caso algum arquivo esteja ausente, o pipeline interrompe a etapa e orienta a execução prévia das fases necessárias, assegurando a integridade e a reprodutibilidade da análise.
+
+```bash
+%%bash
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+SAMPLE="cap-ngse-b-2019"
+
+echo "👁️ Preparação para visualização no IGV..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Verificar arquivos necessários para IGV
+echo "✅ Checklist de arquivos para IGV:"
+
+arquivos_igv=(
+    "$MeuDrive/dados/bam/$SAMPLE.sorted.bam:Arquivo BAM"
+    "$MeuDrive/dados/bam/$SAMPLE.sorted.bam.bai:Índice BAM"
+    "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf:Arquivo VCF"
+)
+
+todos_presentes=true
+for item in "${arquivos_igv[@]}"; do
+    arquivo=$(echo $item | cut -d: -f1)
+    descricao=$(echo $item | cut -d: -f2)
+
+    if [ -f "$arquivo" ]; then
+        echo "✅ $descricao"
+    else
+        echo "❌ $descricao - AUSENTE"
+        todos_presentes=false
+    fi
+done
+
+echo ""
+if [ "$todos_presentes" = true ]; then
+    echo "🎉 Todos os arquivos estão disponíveis para IGV!"
+
+    # Sugerir regiões para visualização
+    if [ -f "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" ]; then
+        variantes_count=$(bcftools view -H "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" | wc -l)
+
+        if [ $variantes_count -gt 0 ]; then
+            echo ""
+            echo "📍 Regiões recomendadas para visualização:"
+
+            bcftools view -H "$MeuDrive/dados/vcf/$SAMPLE.filtered.vcf" | head -5 | \
+            while read linha; do
+                chrom=$(echo "$linha" | cut -f1)
+                pos=$(echo "$linha" | cut -f2)
+                ref=$(echo "$linha" | cut -f4)
+                alt=$(echo "$linha" | cut -f5)
+                qual=$(echo "$linha" | cut -f6)
+
+                # Criar região expandida para visualização
+                start=$((pos - 50))
+                end=$((pos + 50))
+
+                echo "• $chrom:$start-$end ($ref→$alt, QUAL=$qual)"
+            done
+        fi
+    fi
+
+    echo ""
+    echo "🔧 Passos no IGV:"
+    echo "1. Genomes → Load Genome from Server → Human hg19"
+    echo "2. File → Load from File → Selecionar BAM"
+    echo "3. File → Load from File → Selecionar VCF"
+    echo "4. Navegar para uma das regiões sugeridas acima"
+    echo "5. Zoom in para ver reads individuais"
+
+else
+    echo "⚠️ Alguns arquivos estão faltando para visualização no IGV."
+    echo "📝 Execute as etapas anteriores do pipeline primeiro."
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+```
+
+Output:
+```
+👁️ Preparação para visualização no IGV...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Checklist de arquivos para IGV:
+✅ Arquivo BAM
+✅ Índice BAM
+✅ Arquivo VCF
+
+🎉 Todos os arquivos estão disponíveis para IGV!
+
+📍 Regiões recomendadas para visualização:
+• chr10:93553-93653 (C→T, QUAL=1169.64)
+• chr10:93566-93666 (C→T, QUAL=245.64)
+• chr10:93644-93744 (T→C, QUAL=367.64)
+• chr10:93682-93782 (A→G, QUAL=206.64)
+• chr10:93895-93995 (G→A, QUAL=768.64)
+
+🔧 Passos no IGV:
+1. Genomes → Load Genome from Server → Human hg19
+2. File → Load from File → Selecionar BAM
+3. File → Load from File → Selecionar VCF
+4. Navegar para uma das regiões sugeridas acima
+5. Zoom in para ver reads individuais
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+```
+
+Verificação de pré-requisitos para anotação de variantes
+
+Este bloco realiza uma checagem automatizada dos arquivos VCF necessários para a etapa de anotação de variantes, garantindo que o pipeline seja executado apenas quando os insumos mínimos estiverem disponíveis. É definido o diretório de trabalho e criada uma função reutilizável para verificar a existência dos arquivos, exibindo também o tamanho em disco como validação adicional de integridade.
+
+O script verifica a presença tanto do VCF bruto gerado pela chamada de variantes quanto do VCF previamente filtrado, contabilizando quantos arquivos estão disponíveis. Caso ao menos um VCF esteja presente, o pipeline é liberado para a etapa de anotação, priorizando o uso do arquivo filtrado quando disponível.
+
+Por fim, são exibidas estatísticas básicas do arquivo selecionado, incluindo o número total de variantes a serem anotadas. Caso nenhum VCF seja encontrado, o script orienta o usuário a executar as etapas anteriores do fluxo de trabalho, assegurando ordem lógica, reprodutibilidade e confiabilidade na anotação funcional e clínica das variantes.
+
+```bash
+%%bash
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+
+echo "🔍 Verificação de pré-requisitos para anotação..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Função para verificar arquivo
+verificar_arquivo() {
+    local arquivo="$1"
+    local descricao="$2"
+
+    if [ -f "$arquivo" ]; then
+        local tamanho=$(du -h "$arquivo" | cut -f1)
+        echo "✅ $descricao ($tamanho)"
+        return 0
+    else
+        echo "❌ $descricao - AUSENTE"
+        return 1
+    fi
+}
+
+echo "📊 Arquivos VCF necessários:"
+total=0
+presentes=0
+
+# Verificar arquivos VCF das aulas anteriores
+arquivos_vcf=(
+    "$MeuDrive/dados/vcf/cap-ngse-b-2019.filtered.vcf:VCF filtrado"
+    "$MeuDrive/dados/vcf/cap-ngse-b-2019.vcf:VCF de variantes"
+)
+
+for item in "${arquivos_vcf[@]}"; do
+    arquivo=$(echo $item | cut -d: -f1)
+    descricao=$(echo $item | cut -d: -f2)
+
+    if verificar_arquivo "$arquivo" "$descricao"; then
+        ((presentes++))
+    fi
+    ((total++))
+done
+
+echo ""
+echo "📋 RESUMO:"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "✅ Arquivos presentes: $presentes/$total"
+
+if [ $presentes -gt 0 ]; then
+    echo "🎉 Pelo menos um arquivo VCF disponível!"
+    echo "🚀 Pronto para anotação de variantes."
+
+    # Mostrar estatísticas básicas do melhor arquivo disponível
+    if [ -f "$MeuDrive/dados/vcf/cap-ngse-b-2019.filtered.vcf" ]; then
+        arquivo_trabalho="$MeuDrive/dados/vcf/cap-ngse-b-2019.filtered.vcf"
+        echo "📄 Arquivo principal: cap-ngse-b-2019.filtered.vcf"
+    elif [ -f "$MeuDrive/dados/vcf/cap-ngse-b-2019.vcf" ]; then
+        arquivo_trabalho="$MeuDrive/dados/vcf/cap-ngse-b-2019.variants.vcf"
+        echo "📄 Arquivo principal: cap-ngse-b-2019.vcf"
+    fi
+
+    if [ -n "$arquivo_trabalho" ]; then
+        variantes=$(grep -c '^[^#]' "$arquivo_trabalho")
+        echo "🧬 Variantes a anotar: $variantes"
+    fi
+
+else
+    echo "⚠️ Nenhum arquivo VCF encontrado!"
+    echo "📝 Execute os notebooks das aulas anteriores primeiro:"
+    echo "   1. Preparação do Genoma de Referência"
+    echo "   2. Mapeamento e Alinhamento"
+    echo "   3. Chamada de Variantes"
+    echo "   4. Anotação (esta aula)"
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+```
+
+Output:
+```
+🔍 Verificação de pré-requisitos para anotação...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 Arquivos VCF necessários:
+✅ VCF filtrado (877K)
+✅ VCF de variantes (1.3M)
+
+📋 RESUMO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Arquivos presentes: 2/2
+🎉 Pelo menos um arquivo VCF disponível!
+🚀 Pronto para anotação de variantes.
+📄 Arquivo principal: cap-ngse-b-2019.filtered.vcf
+🧬 Variantes a anotar: 4655
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Download, instalação e validação do ANNOVAR
+
+Este bloco automatiza a instalação do ANNOVAR, uma das ferramentas mais utilizadas para anotação funcional e genética de variantes. O script verifica se o diretório annovar já existe no ambiente, evitando reinstalações desnecessárias e garantindo idempotência do pipeline.
+
+O script realiza o download da versão pública mais recente diretamente do site oficial, extrai o conteúdo do arquivo compactado (.tar.gz) e remove o arquivo temporário para otimizar o uso de espaço em disco.
+
+Após a instalação, é feita uma verificação de integridade, confirmando a presença do script principal annotate_variation.pl e listando os scripts Perl disponíveis no diretório. Essa checagem garante que o ambiente esteja corretamente preparado para as próximas etapas de anotação de variantes, reduzindo falhas de execução e facilitando o diagnóstico de problemas.
+
+```bash
+
+%%bash
+
+echo "📥 Baixando e instalando ANNOVAR..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Verificar se ANNOVAR já está instalado
+if [ -d "annovar" ]; then
+    echo "✅ ANNOVAR já está instalado!"
+    echo "📁 Localização: $(pwd)/annovar"
+else
+    echo "📥 Baixando ANNOVAR..."
+
+    # Download do ANNOVAR (versão pública)
+    wget -q http://www.openbioinformatics.org/annovar/download/0wgxR2rIVP/annovar.latest.tar.gz
+
+    echo "📦 Extraindo ANNOVAR..."
+    tar -xzf annovar.latest.tar.gz
+
+    echo "🧹 Limpando arquivo temporário..."
+    rm annovar.latest.tar.gz
+
+    echo "✅ ANNOVAR instalado com sucesso!"
+fi
+
+# Verificar instalação
+if [ -f "annovar/annotate_variation.pl" ]; then
+    echo ""
+    echo "🔍 Verificando instalação:"
+    echo "• Script principal: $(ls -la annovar/annotate_variation.pl | awk '{print $1, $5, $9}')"
+    echo "• Scripts disponíveis: $(ls annovar/*.pl | wc -l) arquivos"
+
+    echo ""
+    echo "📋 Scripts principais do ANNOVAR:"
+    ls annovar/*.pl | while read script; do
+        nome=$(basename "$script")
+        echo "  • $nome"
+    done
+
+else
+    echo "❌ Erro na instalação do ANNOVAR!"
+    echo "📝 Verifique a conectividade e tente novamente."
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+```
+
+Download do banco de dados refGene para anotação com ANNOVAR Este bloco realiza o download do banco de dados refGene, utilizado pelo ANNOVAR para anotação baseada em genes, a partir dos servidores oficiais do ANNOVAR. A variável db_name é definida para facilitar a reutilização do código com outros bancos de dados, promovendo modularidade do pipeline.
+
+O script annotate_variation.pl é executado com a opção -downdb, indicando que a ação é o download do banco de dados, e -buildver hg38, especificando a versão do genoma de referência humano utilizada na análise. O parâmetro -webfrom annovar define a origem dos dados, enquanto o diretório annovar/humandb é utilizado para armazenar localmente os arquivos baixados.
+
+Essa etapa prepara o ambiente para a anotação funcional das variantes, permitindo a associação das posições genômicas às estruturas gênicas conhecidas (genes, éxons, íntrons e regiões regulatórias) de acordo com a versão do genoma selecionada.
+
+```bash
+
+%%bash
+
+db_name="refGene"
+
+perl annovar/annotate_variation.pl -buildver hg19 -downdb \
+    -webfrom annovar "$db_name" annovar/humandb
+```
+
+```bash
+
+%%bash
+
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+
+echo "🗄️ Baixando bancos de dados essenciais..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+db_name="gnomad_exome"
+
+if perl annovar/annotate_variation.pl -buildver hg19 -downdb \
+  -webfrom annovar "$db_name" annovar/humandb 2>/dev/null; then
+    echo "✅ $description baixado com sucesso"
+else
+    echo "⚠️ $description - erro no download"
+fi
+
+echo ""
+echo "📊 Resumo do banco baixado:"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+
+if [ -f "annovar/humandb/hg19_$db_name.txt" ]; then
+    tamanho=$(du -h "annovar/humandb/hg19_$db_name.txt" | cut -f1)
+    echo "✅ $db_name ($tamanho)"
+    echo "🎉 Banco $db_name pronto para anotação!"
+else
+    echo "❌ $db_name - não disponível"
+    echo "⚠️ Problemas no download"
+```
+
+```bash
+
+%%bash
+
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+
+echo "🗄️ Baixando bancos de dados essenciais..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+db_name="revel"
+
+if perl annovar/annotate_variation.pl -buildver hg19 -downdb \
+  -webfrom annovar "$db_name" annovar/humandb/ 2>/dev/null; then
+    echo "✅ $description baixado com sucesso"
+else
+    echo "⚠️ $description - erro no download"
+fi
+
+echo ""
+echo "📊 Resumo do banco baixado:"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+
+if [ -f "annovar/humandb/hg19_$db_name.txt" ]; then
+    tamanho=$(du -h "annovar/humandb/hg19_$db_name.txt" | cut -f1)
+    echo "✅ $db_name ($tamanho)"
+    echo "🎉 Banco $db_name pronto para anotação!"
+else
+    echo "❌ $db_name - não disponível"
+    echo "⚠️ Problemas no download"
+fi
+```
+
+```bash
+
+%%bash
+
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+
+echo "🗄️ Baixando bancos de dados essenciais..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+db_name="clinvar_20200316"
+
+if perl annovar/annotate_variation.pl -buildver hg19 -downdb \
+  -webfrom annovar "$db_name" annovar/humandb/ 2>/dev/null; then
+    echo "✅ $description baixado com sucesso"
+else
+    echo "⚠️ $description - erro no download"
+fi
+
+echo ""
+echo "📊 Resumo do banco baixado:"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+
+if [ -f "annovar/humandb/hg19_$db_name.txt" ]; then
+    tamanho=$(du -h "annovar/humandb/hg19_$db_name.txt" | cut -f1)
+    echo "✅ $db_name ($tamanho)"
+    echo "🎉 Banco $db_name pronto para anotação!"
+else
+    echo "❌ $db_name - não disponível"
+    echo "⚠️ Problemas no download"
+fi
+```
+
+```bash
+%%bash
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+
+echo "📄 Preparando arquivo VCF para anotação..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# Verificar conteúdo do VCF
+echo "🧬 Variantes no arquivo: $MeuDrive/dados/vcf/cap-ngse-b-2019.filtered.vcf"
+
+# Criar diretório de anotação
+mkdir -p "$MeuDrive/dados/annotation"
+
+perl annovar/convert2annovar.pl -format vcf4 "$MeuDrive/dados/vcf/cap-ngse-b-2019.filtered.vcf" \
+    > "$MeuDrive/dados/annotation/variantes.avinput"
+
+# Verificar conversão
+if [ -f "$MeuDrive/dados/annotation/variantes.avinput" ]; then
+    linhas_convertidas=$(wc -l < "$MeuDrive/dados/annotation/variantes.avinput")
+    echo "✅ Conversão concluída!"
+    echo "📄 Arquivo gerado: variantes.avinput"
+    echo "📊 Linhas convertidas: $linhas_convertidas"
+else
+    echo "❌ Erro na conversão para formato ANNOVAR!"
+fi
+```
+
+```bash
+
+%%bash
+MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
+
+echo "🧬 Executando anotação básica (gene-based)..."
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+if [ ! -f "$MeuDrive/dados/annotation/variantes.avinput" ]; then
+    echo "❌ Arquivo ANNOVAR input não encontrado!"
+    echo "📝 Execute a célula de preparação anterior."
+    exit 1
+fi
+
+echo "🔄 Executando anotação genômica..."
+
+# Anotação básica com RefSeq
+perl annovar/annotate_variation.pl -geneanno -buildver hg19 \
+    "$MeuDrive/dados/annotation/variantes.avinput" annovar/humandb/
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
