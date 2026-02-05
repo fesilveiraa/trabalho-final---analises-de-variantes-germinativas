@@ -325,7 +325,7 @@ bwa mem -K 100000000 \
 
 Converte o arquivo SAM gerado no alinhamento para o formato BAM, realiza a ordenação das leituras por coordenada genômica e cria o arquivo de índice (.bai) utilizando o SAMtools. Essas etapas são essenciais para otimizar o desempenho e permitir o uso do arquivo BAM em análises subsequentes, como visualização, chamadas de variantes e processamento com o GATK.
 
-``bash 
+```bash 
 %%bash
 MeuDrive="/content/drive/MyDrive/TRABALHO_FINAL"
 SAMPLE="cap-ngse-b-2019"
